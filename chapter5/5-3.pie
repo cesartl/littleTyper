@@ -1,0 +1,32 @@
+#lang pie
+
+;; Exercise 5.3
+;;
+;; Define a function called filter-list which takes (in addition to the type
+;; argument for the list element) one (-> E Nat) argument representing a
+;; predicate and one (List E) argument.
+;;
+;; The function evaluates to a (List E) consisting of elements from the list
+;; argument where the predicate is true.
+;;
+;; Consider the predicate to be false for an element if it evaluates to zero,
+;; and true otherwise.
+
+(claim filter-list
+  (Pi ((E U))
+    (-> (List E) (-> E Nat) (List E))))
+(define filter-list
+  (lambda (E)
+    (lambda (l p)
+      (rec-List l
+        (the (List E) nil)
+        (lambda (e es n-1)
+          (rec-Nat (p e)
+            n-1
+            (lambda (x y) (:: e n-1))))))))
+
+(claim upto4 (List Nat))
+(define upto4 (:: 1 (:: 2 (:: 3 (:: 4 nil)))))
+
+(check-same (List Nat) (filter-list Nat upto4 (lambda (n) 1)) upto4)
+(check-same (List Nat) (filter-list Nat upto4 (lambda (n) 0)) nil)

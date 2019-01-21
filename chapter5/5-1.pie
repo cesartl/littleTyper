@@ -1,0 +1,29 @@
+#lang pie
+
+;; Exercise 5.1
+;;
+;; Define a function called sum-List that takes one List Nat argument and
+;; evaluates to a Nat, the sum of the Nats in the list.
+
+(claim + (-> Nat Nat Nat))
+(define +
+  (lambda (x y)
+    (rec-Nat x
+      y
+      (lambda (x-1 prev)
+        (add1 prev)
+        )
+      )
+    )
+  )
+
+(claim sum-List
+  (-> (List Nat) Nat))
+(define sum-List
+  (lambda (l)
+    (rec-List l
+      0
+      (lambda (e es sumn-1)
+        (+ e sumn-1)))))
+
+(check-same Nat (sum-List (:: 1 (:: 2 (:: 3 nil)))) 6)

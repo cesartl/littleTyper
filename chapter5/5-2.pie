@@ -1,0 +1,25 @@
+#lang pie
+
+;; Exercise 5.2
+;;
+;; Define a function called maybe-last which takes (in addition to the type
+;; argument for the list element) one (List E) argument and one E argument and
+;; evaluates to an E with value of either the last element in the list, or the
+;; value of the second argument if the list is empty.
+
+(claim maybe-last
+  (Pi ((E U))
+    (-> (List E) E E)))
+(define maybe-last
+  (lambda (E)
+    (lambda (l orElse)
+      (rec-List l
+        orElse
+        (lambda (e es n-1)
+          (rec-List es
+            e
+            (lambda (x y z) n-1)))))))
+
+(check-same Nat (maybe-last Nat (:: 1 nil) 4) 1)
+(check-same Nat (maybe-last Nat (:: 1 (:: 2 nil)) 4) 2)
+(check-same Nat (maybe-last Nat (the (List Nat) nil) 4) 4)

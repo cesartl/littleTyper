@@ -1,0 +1,36 @@
+#lang pie
+;; Exercise 4.1
+;;
+;; Extend the definitions of kar and kdr (frame 4.42) so they work with arbirary
+;; Pairs (instead of just for Pair Nat Nat).
+
+(claim elim-pair
+  (Pi ((A U) (D U) (X U))
+    (-> (Pair A D)
+        (-> A D X)
+        X)))
+(define elim-pair
+  (lambda (A D X)
+    (lambda (p f)
+      (f(car p) (cdr p)))))
+
+(claim kar
+  (Pi ((A U) (B U))
+    (-> (Pair A B) A)))
+(define kar
+  (lambda (A B)
+    (lambda (p)
+      (elim-pair A B A p
+        (lambda (a b) a)))))
+
+(claim kdr
+  (Pi ((A U) (B U))
+    (-> (Pair A B) B)))
+(define kdr
+  (lambda (A B)
+    (lambda (p)
+      (elim-pair A B B p
+        (lambda (a b) b)))))
+
+(kar Nat Nat (the (Pair Nat Nat) (cons 1 2)))
+(kdr Nat Nat (the (Pair Nat Nat) (cons 1 2)))
