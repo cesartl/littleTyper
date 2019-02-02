@@ -17,13 +17,16 @@
     )
   )
 
-(claim sum-List
-  (-> (List Nat) Nat))
+(claim sum-List (-> (List Nat) Nat))
 (define sum-List
   (lambda (l)
     (rec-List l
       0
       (lambda (e es sumn-1)
-        (+ e sumn-1)))))
+        (+ e sumn-1)
+        )
+      )
+    )
+  )
 
 (check-same Nat (sum-List (:: 1 (:: 2 (:: 3 nil)))) 6)

@@ -18,7 +18,7 @@
         (lambda (e es n-1)
           (rec-List es
             e
-            (lambda (x y z) n-1)))))))
+            (lambda (_ _ _) n-1)))))))
 
 (check-same Nat (maybe-last Nat (:: 1 nil) 4) 1)
 (check-same Nat (maybe-last Nat (:: 1 (:: 2 nil)) 4) 2)

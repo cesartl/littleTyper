@@ -1,0 +1,46 @@
+#lang pie
+
+(claim last
+  (Pi ((E U) (n Nat))
+    (-> (Vec E (add1 n))
+      E)))
+
+(claim base-last
+  (Pi ((E U))
+    (-> (Vec E (add1 zero))
+      E)))
+(define base-last
+  (lambda (E)
+    (lambda (es)
+      (head es))))
+
+(claim mot-last
+  (Pi ((E U) (n Nat))
+    U))
+(define mot-last
+  (lambda (E n)
+    (-> (Vec E (add1 n))
+      E)))
+
+(claim step-last
+  (Pi ((E U) (n-1 Nat))
+    (-> (-> (Vec E n-1) E)
+      (-> (Vec E (add1 n-1)) E))))
+
+(define step-last
+  (lambda (E n-1)
+    (lambda (last_n-1)
+      (lambda (es)
+        (last_n-1 (tail es))))))
+
+
+(define last
+  (lambda (E n)
+    (ind-Nat n
+      (mot-last E)
+      (base-last E)
+      (step-last E))))
+
+(add1 2)
+
+(check-same Atom 'b (last Atom 3 (vec:: 'a (vec:: 'b (vec:: c' vecnil)))))

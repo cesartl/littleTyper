@@ -5,17 +5,18 @@
 ;; Pairs (instead of just for Pair Nat Nat).
 
 (claim elim-pair
-  (Pi ((A U) (D U) (X U))
+  (Pi ([A U] [D U] [X U])
     (-> (Pair A D)
-        (-> A D X)
-        X)))
+        (-> A D
+          X)
+      X)))
 (define elim-pair
   (lambda (A D X)
     (lambda (p f)
       (f(car p) (cdr p)))))
 
 (claim kar
-  (Pi ((A U) (B U))
+  (Pi [(A U) (B U)]
     (-> (Pair A B) A)))
 (define kar
   (lambda (A B)

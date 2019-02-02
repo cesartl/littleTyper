@@ -61,18 +61,18 @@
   (lambda (l n)
     (rec-List l
       (:: n nil)
-      (lambda (a b c)
+      (lambda (_ _ _)
         (rec-Nat (> n (head-Nat l n))
           (:: n l)
-          (lambda (aa bb)
+          (lambda (_ _)
             (rec-List l
               (the (List Nat) nil)
-              (lambda (e es n-1)
+              (lambda (e _ n-1)
                 (rec-Nat (> e n)
                   (rec-Nat (> n (head-Nat n-1 n))
                     (:: e (:: n n-1))
-                    (lambda (x y) (:: e n-1)))
-                  (lambda (x y) (:: e n-1))
+                    (lambda (_ _) (:: e n-1)))
+                  (lambda (_ _) (:: e n-1))
                   )
                 )
               )
@@ -82,6 +82,7 @@
       )
     )
   )
+  
             
 (check-same (List Nat) (:: 1 (:: 3 (:: 4 (:: 5 nil)))) (insert-sorted (:: 1 (:: 3 (:: 5 nil))) 4))
 (check-same (List Nat) (:: 1 (:: 2 (:: 3 (:: 5 nil)))) (insert-sorted (:: 1 (:: 3 (:: 5 nil))) 2))
@@ -102,3 +103,7 @@
   )
 
 (check-same (List Nat) (:: 1 (:: 3 (:: 4 (:: 5 nil)))) (sort-List-Nat (:: 5 (:: 3 (:: 1 (:: 4 nil))))))       
+
+(claim min (-> (List Nat) Nat))
+
+
