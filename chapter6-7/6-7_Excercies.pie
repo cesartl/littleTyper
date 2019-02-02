@@ -1,0 +1,217 @@
+#lang pie
+
+;; Exercises on Vec and ind-Nat from Chapters 6 and 7 of The Little
+;; Typer
+
+(claim +
+  (-> Nat Nat
+    Nat))
+
+(define +
+  (λ (a b)
+    (rec-Nat a
+      b
+      (λ (a-k b+a-k)
+        (add1 b+a-k)))))
+
+;; Exercise 7.1
+;;
+;; Define a function called append that takes an argument of type (Vec E n) and an
+;; argument of type (Vect E m) and evaluates to a value of type (Vec (+ n m)), the
+;; result of appending the elements of the second argument to the end of the first.
+
+(claim append
+  (Π ([E U]
+      [n Nat]
+      [m Nat])
+    (-> (Vec E n) (Vec E m)
+      (Vec E (+ n m)))))
+
+(claim base-append
+  (Pi [(E U) (m Nat)]
+    (-> (Vec E m) (Vec E zero)
+      (Vec E m))))
+(define base-append
+  (lambda (E m)
+    (lambda (vecM _)
+      vecM)))
+
+(claim mot-append
+  (-> U Nat Nat
+    U))
+(define mot-append
+  (lambda (E m n)
+    (-> (Vec E n)
+      (Vec E (+ n m)))))
+
+(claim step-append
+  (Pi [(E U) (m Nat) (n-1 Nat)]
+    (-> (mot-append E m n-1)
+      (mot-append E m (add1 n-1)))))
+(define step-append
+  (lambda (E m n-1)
+    (lambda (append_n-1)
+      (lambda (es)
+        (vec:: (head es) (append_n-1 (tail es)))))))
+
+(define append
+  (lambda (E n m)
+    (lambda (vecN VecM)
+      ((ind-Nat n
+         (mot-append E m)
+         (base-append E m VecM)
+         (step-append E m)) vecN)
+      )))
+
+(check-same (Vec Atom 3) (vec:: 'a (vec:: 'b (vec:: 'c vecnil))) (append Atom 1 2 (vec:: 'a vecnil) (vec:: 'b (vec:: 'c vecnil))))
+
+;; Exercise 7.2
+;;
+;; Define a function called drop-last-k that takes an argument of type (Vec E ?) and
+;; evaluates to a value of type (Vec E ?), the result of dropping the last k elements
+;; from the first argument.
+;;
+;; NB: The type of the function should guarantee that we can't drop more elements
+;; than there are in the first argument.
+
+(claim drop-last-k
+  (Pi [(E U) (k Nat) (r Nat)]
+    (-> (Vec E (+ r k))
+      (Vec E r))))
+
+(claim base-drop-last-k
+  (Pi [(E U) (k Nat)]
+    (-> (Vec E k)
+      (Vec E zero))))
+(define base-drop-last-k
+  (lambda (E k)
+    (lambda (_) vecnil)))
+
+(claim mot-drop-last-k
+  (-> U Nat Nat
+    U))
+(define mot-drop-last-k
+  (lambda (E k r)
+    (-> (Vec E (+ r k))
+      (Vec E r))))
+
+(claim step-drop-last-k
+  (Pi [(E U) (k Nat) (r-1 Nat)]
+    (-> (mot-drop-last-k E k r-1)
+      (mot-drop-last-k E k (add1 r-1)))))
+(define step-drop-last-k
+  (lambda (E k r-1)
+    (lambda (drop_r-1)
+      (lambda (es)
+        (vec:: (head es) (drop_r-1 (tail es)))))))
+
+(define drop-last-k
+  (lambda (E k r)
+    (ind-Nat r
+      (mot-drop-last-k E k)
+      (base-drop-last-k E k)
+      (step-drop-last-k E k))))
+
+(check-same (Vec Atom 2) (vec:: 'a (vec:: 'b vecnil)) (drop-last-k Atom 3 2 (vec:: 'a (vec:: 'b (vec:: 'c (vec:: 'd (vec:: 'e vecnil)))))))
+
+;----
+(claim unfold-vec
+  (Pi [(E U) (seed E) (f (-> E E)) (n Nat)] 
+      (Vec E (add1 n))))
+(claim mot-unfold-vec
+  (-> U Nat
+      U))
+(define mot-unfold-vec
+  (lambda (E n)
+    (Vec E (add1 n))))
+
+(define unfold-vec
+  (lambda (E seed f n)
+    (ind-Nat n
+      (mot-unfold-vec E)
+      (vec:: seed vecnil)
+      (lambda (n-1 fold_n-1)
+        (vec:: (f (head fold_n-1)) fold_n-1)))))
+
+(claim generate
+  (Pi [(E U) (e E) (n Nat)]
+    (Vec E n)))
+
+(claim mot-generate
+  (-> U Nat
+    U))
+(define mot-generate
+  (lambda (E n)
+    (Vec E n)))
+
+(define generate
+  (lambda (E e n)
+    (ind-Nat n
+      (mot-generate E)
+      vecnil
+      (lambda (n-1 atoms_n-1) (vec:: e atoms_n-1)))))
+
+(claim peas
+  (Pi [(n Nat)]
+    (Vec Atom n)))
+
+(claim atoms
+  (Pi [(a Atom) (n Nat)]
+    (Vec Atom n)))
+
+(define atoms
+  (generate Atom))
+
+(define peas
+  (atoms 'peas))
+
+(check-same (Vec Atom 10) (peas 10) (drop-last-k Atom 2 10 (peas 12)))
+
+
+
+;; Exercise 7.0
+;;
+;; Define a function called zip that takes an argument of type (Vec A n) and a
+;; second argument of type (Vec B n) and evaluates to a vlue of type (Vec (Pair A B) n),
+;; the result of zipping the first and second arguments.
+
+
+(claim zip
+  (Pi [(A U) (B U) (n Nat)]
+    (-> (Vec A n) (Vec B n) (Vec (Pair A B) n))))
+
+(claim mot-zip
+  (-> U U Nat
+    U))
+(define mot-zip
+  (lambda (A B n)
+    (-> (Vec A n) (Vec B n) (Vec (Pair A B) n))))
+
+(claim base-zip
+  (Pi [(A U) (B U)]
+    (-> (Vec A zero) (Vec B zero) (Vec (Pair A B) zero))))
+(define base-zip
+  (lambda (A B)
+    (lambda (va vb)
+      vecnil)))
+
+(claim step-zip
+  (Pi [(A U) (B U) (n-1 Nat)]
+    (-> (mot-zip A B n-1)
+      (mot-zip A B (add1 n-1)))))
+(define step-zip
+  (lambda (A B n-1)
+    (lambda (zip_n-1)
+      (lambda (va vb)
+        (vec:: (cons (head va) (head vb)) (zip_n-1 (tail va) (tail vb)))))))
+
+(define zip
+  (lambda (A B n)
+    (ind-Nat n
+      (mot-zip A B)
+      (base-zip A B)
+      (step-zip A B))))
+
+(check-same (Vec (Pair Atom Nat) 3) (unfold-vec (Pair Atom Nat) (cons 'a 0) (lambda(p) (cons (car p) (add1 (cdr p)))) 2) (zip Atom Nat 3 (atoms 'a 3) (unfold-vec Nat 0 (lambda(n) (add1 n)) 2)))
+
+(unfold-vec Nat zero (lambda(n) (add1 n)) 3)
