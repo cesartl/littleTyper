@@ -85,3 +85,10 @@
       (step-drop-last E))))
 
 (check-same (Vec Atom 2) (vec:: 'a (vec:: 'b vecnil)) (drop-last Atom 2 (vec:: 'a (vec:: 'b (vec:: 'c vecnil)))))
+
+(claim peas
+  (Pi ((n Nat))
+    (Vec Atom n)))
+(define peas
+  (lambda (n)
+    TODO))

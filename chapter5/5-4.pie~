@@ -5,3 +5,105 @@
 ;; Define a function called sort-List-Nat which takes one (List Nat) argument
 ;; and evaluates to a (List Nat) consisting of the elements from the list
 ;; argument sorted in ascending order.
+
+(claim > (-> Nat Nat Nat))
+(define >
+  (lambda (n)
+    (iter-Nat n
+      (the (-> Nat Nat) (lambda (m) 0))
+      (lambda (n-1>)
+        (lambda (m)
+          (which-Nat m
+            1
+            (lambda (m-1) (n-1> m-1)))
+          )
+        )
+      )
+    )
+  )
+
+(claim eq (-> Nat Nat Nat))
+(define eq
+  (lambda (x y)
+    (rec-Nat (> x y)
+      (rec-Nat (> y x) 1 (lambda (n m) 0))
+      (lambda (n m) 0))))
+
+(check-same Nat 0 (eq 3 4))
+(check-same Nat 0 (eq 4 3))
+(check-same Nat 1 (eq 4 4))
+
+(claim max (-> (List Nat) Nat))
+(define max
+  (lambda (l)
+    (rec-List l
+      0
+      (lambda (e es n-1)
+        (rec-List es
+          n-1
+          (lambda (e2 es2 n-1bis)
+            (rec-Nat (> e n-1) n-1 (lambda (x y) e))))))))
+
+(check-same Nat 7 (max (:: 5 (:: 6 (:: 7 (:: 3 nil))))))
+(check-same Nat 9 (max (:: 9 (:: 6 (:: 7 (:: 3 nil))))))
+
+(claim head-Nat (-> (List Nat) Nat Nat))
+(define head-Nat
+  (lambda (l n)
+    (rec-List l
+      n
+      (lambda (e es n-1) e))))
+
+(check-same Nat 3 (head-Nat (:: 3 (:: 4 nil)) 8))
+
+(claim insert-sorted (-> (List Nat) Nat (List Nat)))
+(define insert-sorted
+  (lambda (l n)
+    (rec-List l
+      (:: n nil)
+      (lambda (_ _ _)
+        (rec-Nat (> n (head-Nat l n))
+          (:: n l)
+          (lambda (_ _)
+            (rec-List l
+              (the (List Nat) nil)
+              (lambda (e _ n-1)
+                (rec-Nat (> e n)
+                  (rec-Nat (> n (head-Nat n-1 n))
+                    (:: e (:: n n-1))
+                    (lambda (_ _) (:: e n-1)))
+                  (lambda (_ _) (:: e n-1))
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  
+            
+(check-same (List Nat) (:: 1 (:: 3 (:: 4 (:: 5 nil)))) (insert-sorted (:: 1 (:: 3 (:: 5 nil))) 4))
+(check-same (List Nat) (:: 1 (:: 2 (:: 3 (:: 5 nil)))) (insert-sorted (:: 1 (:: 3 (:: 5 nil))) 2))
+(check-same (List Nat) (:: 4 nil) (insert-sorted nil 4))
+(check-same (List Nat) (:: 1 (:: 4 nil)) (insert-sorted (:: 4 nil) 1))
+(check-same (List Nat) (:: 1 (:: 4 nil)) (insert-sorted (:: 1 nil) 4))
+
+(claim sort-List-Nat (-> (List Nat) (List Nat)))
+(define sort-List-Nat
+  (lambda (l)
+    (rec-List l
+      (the (List Nat) nil)
+      (lambda (e es n-1)
+        (insert-sorted n-1 e)
+        )
+      )
+    )
+  )
+
+(check-same (List Nat) (:: 1 (:: 3 (:: 4 (:: 5 nil)))) (sort-List-Nat (:: 5 (:: 3 (:: 1 (:: 4 nil))))))       
+
+(claim min (-> (List Nat) Nat))
+
+
