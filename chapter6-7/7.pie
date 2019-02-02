@@ -15,7 +15,7 @@
       (head es))))
 
 (claim mot-last
-  (Pi ((E U) (n Nat))
+  (-> U Nat
     U))
 (define mot-last
   (lambda (E n)
@@ -24,8 +24,8 @@
 
 (claim step-last
   (Pi ((E U) (n-1 Nat))
-    (-> (-> (Vec E n-1) E)
-      (-> (Vec E (add1 n-1)) E))))
+    (-> (mot-last E n-1)
+      (mot-last E (add1 n-1)))))
 
 (define step-last
   (lambda (E n-1)
@@ -41,6 +41,47 @@
       (base-last E)
       (step-last E))))
 
-(add1 2)
+(check-same Atom 'c (last Atom 2 (vec:: 'a (vec:: 'b (vec:: 'c vecnil)))))
 
-(check-same Atom 'b (last Atom 3 (vec:: 'a (vec:: 'b (vec:: c' vecnil)))))
+;----------- drop last
+
+(claim drop-last
+  (Pi ((E U) (n Nat))
+    (-> (Vec E (add1 n))
+      (Vec E n))))
+
+(claim base-drop-last
+  (Pi ((E U))
+    (-> (Vec E (add1 zero))
+      (Vec E zero))))
+(define base-drop-last
+  (lambda (E)
+    (lambda (es)
+      vecnil)))
+
+(claim mot-drop-last
+  (-> U Nat
+    U))
+(define mot-drop-last
+  (lambda (E n)
+    (-> (Vec E (add1 n))
+      (Vec E n))))
+
+(claim step-drop-last
+  (Pi ((E U) (n-1 Nat))
+    (-> (mot-drop-last E n-1)
+      (mot-drop-last E (add1 n-1)))))
+(define step-drop-last
+  (lambda (E n-1)
+    (lambda (drop-last_n-1)
+      (lambda (es)
+        (vec:: (head es) (drop-last_n-1 (tail es)))))))
+
+(define drop-last
+  (lambda (E n)
+    (ind-Nat n
+      (mot-drop-last E)
+      (base-drop-last E)
+      (step-drop-last E))))
+
+(check-same (Vec Atom 2) (vec:: 'a (vec:: 'b vecnil)) (drop-last Atom 2 (vec:: 'a (vec:: 'b (vec:: 'c vecnil)))))
