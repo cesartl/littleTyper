@@ -1,0 +1,79 @@
+#lang pie
+
+(claim +
+  (-> Nat Nat
+    Nat))
+
+(define +
+  (λ (a b)
+    (rec-Nat a
+      b
+      (λ (a-k b+a-k)
+        (add1 b+a-k)))))
+
+
+(claim incr
+  (-> Nat Nat))
+(define incr
+  (lambda (n)
+    (iter-Nat n
+      1
+      (+ 1))))
+
+(claim incr=add1
+  (Pi [(n Nat)]
+    (= Nat (incr n) (add1 n))))
+
+(claim step-incr=add1
+  (Pi [(n-1 Nat)]
+    (-> (= Nat (incr n-1) (add1 n-1))
+      (= Nat (incr (add1 n-1)) (add1 (add1 n-1)))
+      )))
+(define step-incr=add1
+  (lambda (n-1)
+    (lambda (p_n-1)
+      (cong p_n-1 (+ 1)))))
+
+(define incr=add1
+  (lambda (n)
+    (ind-Nat n
+      (lambda (k) (= Nat (incr k) (add1 k)))
+      (same (add1 zero))
+      step-incr=add1)))
+
+
+(claim double
+  (-> Nat Nat))
+(define double
+  (lambda (n)
+    (iter-Nat n
+      0
+      (+ 2))))
+(claim twice (-> Nat Nat))
+(define twice (lambda (n) (+ n n)))
+(check-same Nat (double 3) (twice 3))
+
+(claim twice=double
+  (Pi [(n Nat)]
+    (= Nat (twice n) (double n))))
+
+(claim add1+=+add1
+  (Pi [(n Nat) (j Nat)]
+    (= Nat (add1 (+ n j)) (+ n (add1 j)))))
+(define add1+=+add1
+  (lambda (n j)
+    (ind-Nat n
+      (lambda (k)  (= Nat (add1 (+ k j)) (+ k (add1 j))))
+      (same (add1 j))
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1)))))))
+
+(claim step-twice-double
+  (Pi [(n-1 Nat)]
+    (-> (= Nat (twice n-1) (double n-1))
+        (= Nat (twice (add1 n-1)) (double (add1 n-1))))))
+(define step-twice-double
+  (lambda (n-1)
+    (lambda (p_n-1)
+      TODO)))
