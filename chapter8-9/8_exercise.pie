@@ -64,11 +64,11 @@
     (ind-Nat a
       (lambda (k)
         (= Nat (+ k (add1 b)) (add1 (+ k b))))
-        (same (add1 b))
-        (lambda (k-1)
-          (lambda (p_n-1)
-            (cong p_n-1 (+ 1))
-        )))))
+      (same (add1 b))
+      (lambda (k-1)
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1))
+          )))))
 
 (define a=b->a+n=b+n
   (lambda (a b n)
@@ -78,7 +78,7 @@
         (a=b->a+0=b+0 a b a=b)
         (lambda (n-1 p_n-1)
           (trans (a+_b+1=1+_a+b a n-1) (trans (cong p_n-1 (+ 1)) (symm (a+_b+1=1+_a+b b n-1))))
-        )))))
+          )))))
 
 ;; Exercise 8.3
 ;;
@@ -86,10 +86,10 @@
 ;; + is associative.
 
 (claim plusAssociative
-       (Π ([n Nat]
-           [m Nat]
-           [k Nat])
-          (= Nat (+ k (+ n m)) (+ (+ k n) m))))
+  (Π ([n Nat]
+      [m Nat]
+      [k Nat])
+    (= Nat (+ k (+ n m)) (+ (+ k n) m))))
 (define plusAssociative
   (lambda (n m k)
     (ind-Nat k
@@ -98,7 +98,7 @@
       (lambda (k-1)
         (lambda (p_k-1)
           (cong p_k-1 (+ 1))
-      )))))
+          )))))
 
 ;; Exercise 8.4
 ;;
@@ -121,9 +121,9 @@
           (cong p_n-1 (+ 1)))))))
 
 (claim plusCommutative
-       (Π ([n Nat]
-           [m Nat])
-          (= Nat (+ n m) (+ m n))))
+  (Π ([n Nat]
+      [m Nat])
+    (= Nat (+ n m) (+ m n))))
 (define plusCommutative
   (lambda (n m)
     (ind-Nat n
@@ -132,4 +132,25 @@
       (lambda (n-1)
         (lambda (p_n-1)
           (trans (cong p_n-1 (+ 1)) (add1+=+add1 m n-1))
-      )))))
+          )))))
+
+(claim plusCommutative2
+  (Π ([n Nat]
+      [m Nat])
+    (= Nat (+ n m) (+ m n))))
+
+(define plusCommutative2
+  (lambda (n m)
+    (ind-Nat n
+      (lambda (k)  (= Nat (+ k m) (+ m k)))
+      (n+zero=n m)
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (replace
+            (add1+=+add1 m n-1)
+            (lambda (x)
+              (= Nat (add1 (+ n-1 m)) x)
+              )
+            (cong p_n-1 (+ 1))
+            ))))))
+  

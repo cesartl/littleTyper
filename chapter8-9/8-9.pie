@@ -51,6 +51,7 @@
       (+ 2))))
 (claim twice (-> Nat Nat))
 (define twice (lambda (n) (+ n n)))
+
 (check-same Nat (double 3) (twice 3))
 
 (claim twice=double
