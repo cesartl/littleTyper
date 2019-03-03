@@ -1,0 +1,57 @@
+#lang pie
+
+;; Exercise 9.1
+;;
+;; Define a function called same-cons that states and proves that
+;; if you cons the same value to the front of two equal Lists then
+;; the resulting Lists are also equal.
+(claim same-cons
+  (Π ([E U]
+      [l1 (List E)]
+      [l2 (List E)]
+      [e E])
+    (-> (= (List E) l1 l2)
+      (= (List E) (:: e l1) (:: e l2)))))
+
+(claim append-e
+  (Pi [(E U) (e E)]
+    (-> (List E)
+      (List E))))
+(define append-e
+  (lambda (E)
+    (lambda (e)
+      (lambda (l)
+        (:: e l)))))
+
+(define same-cons
+  (lambda (E)
+    (lambda (l1 l2 e)
+      (lambda (l1=l2)
+        (cong
+          l1=l2
+          (append-e E e)
+          )))))
+
+;; Exercise 9.2
+;;
+;; Define a function called same-lists that states and proves that
+;; if two values, e1 and e2, are equal and two lists, l1 and l2 are
+;; equal then the two lists, (:: e1 l1) and (:: e2 l2) are also equal.
+
+(claim same-list
+  (Pi [(E U) (e1 E) (e2 E) (l1 (List E)) (l2 (List E))]
+    (-> (= E e1 e2) (= (List E) l1 l2)
+      (= (List E) (:: e1 l1) (:: e2 l2))
+      )))
+(define same-list
+  (lambda (E e1 e2 l1 l2)
+    (lambda (e1=e2 l1=l2)
+      (replace
+        e1=e2
+        (lambda (n) (= (List E) (:: e1 l1) (:: n l2)))
+        (same-cons E l1 l2 e1 l1=l2)
+        )
+      )
+    )
+  )
+      

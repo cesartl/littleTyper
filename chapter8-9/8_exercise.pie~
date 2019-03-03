@@ -1,1 +1,156 @@
 #lang pie
+
+
+(claim +
+  (-> Nat Nat
+    Nat))
+
+(define +
+  (λ (a b)
+    (rec-Nat a
+      b
+      (λ (_ b+a-k)
+        (add1 b+a-k)))))
+
+;; Exercise 8.1
+;; Define a function called zero+n=n that states and proves that
+;; 0+n = n for all Nat n.
+
+(claim zero+n=n
+  (Pi [(n Nat)]
+    (= Nat n (+ zero n))))
+(define zero+n=n
+  (lambda (n)
+    (same n)))
+
+(claim n+zero=n
+  (Pi [(n Nat)]
+    (= Nat n (+ n zero))))
+(define n+zero=n
+  (lambda (n)
+    (ind-Nat n
+      (lambda (k) (= Nat k (+ k zero)))
+      (same zero)
+      (lambda (n-1) ;p_n-1 = proof that n - 1 = (+ (n - 1) zero), we need (= Nat (add1 n) (+ (add1 n) zero))
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1)))))))
+
+
+;; Exercise 8.2
+;;
+;; Define a function called a=b->a+n=b+n that states and proves that
+;; a = b implies a+n = b+n for all Nats a, b, n.
+
+(claim a=b->a+n=b+n
+  (Pi [(a Nat) (b Nat) (n Nat)]
+    (-> (= Nat a b)
+      (= Nat (+ a n) (+ b n)))))
+
+(claim a=b->a+0=b+0
+  (Pi [(a Nat) (b Nat)]
+    (-> (= Nat a b)
+      (= Nat (+ a zero) (+ b zero)))))
+(define a=b->a+0=b+0
+  (lambda (a b)
+    (lambda (a=b)
+      (trans (symm (n+zero=n a)) (trans a=b (n+zero=n b)))
+      )))
+
+(claim a+_b+1=1+_a+b
+  (Pi ([a Nat] [b Nat])
+    (= Nat (+ a (add1 b)) (add1 (+ a b)))))
+(define a+_b+1=1+_a+b
+  (lambda (a b)
+    (ind-Nat a
+      (lambda (k)
+        (= Nat (+ k (add1 b)) (add1 (+ k b))))
+      (same (add1 b))
+      (lambda (k-1)
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1))
+          )))))
+
+(define a=b->a+n=b+n
+  (lambda (a b n)
+    (lambda (a=b)
+      (ind-Nat n
+        (lambda (k) (= Nat (+ a k) (+ b k)))
+        (a=b->a+0=b+0 a b a=b)
+        (lambda (n-1 p_n-1)
+          (trans (a+_b+1=1+_a+b a n-1) (trans (cong p_n-1 (+ 1)) (symm (a+_b+1=1+_a+b b n-1))))
+          )))))
+
+;; Exercise 8.3
+;;
+;; Define a function called plusAssociative that states and proves that
+;; + is associative.
+
+(claim plusAssociative
+  (Π ([n Nat]
+      [m Nat]
+      [k Nat])
+    (= Nat (+ k (+ n m)) (+ (+ k n) m))))
+(define plusAssociative
+  (lambda (n m k)
+    (ind-Nat k
+      (lambda (i) (= Nat (+ i (+ n m)) (+ (+ i n) m)))
+      (same (+ n m))
+      (lambda (k-1)
+        (lambda (p_k-1)
+          (cong p_k-1 (+ 1))
+          )))))
+
+;; Exercise 8.4
+;;
+;; Define a function called plusCommutative that states and proves that
+;; + is commutative
+;;
+;; NB: You may find the trans elimiator useful
+;; https://docs.racket-lang.org/pie/index.html#%28def._%28%28lib._pie%2Fmain..rkt%29._trans%29%29
+
+(claim add1+=+add1
+  (Pi [(n Nat) (j Nat)]
+    (= Nat (add1 (+ n j)) (+ n (add1 j)))))
+(define add1+=+add1
+  (lambda (n j)
+    (ind-Nat n
+      (lambda (k)  (= Nat (add1 (+ k j)) (+ k (add1 j))))
+      (same (add1 j))
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1)))))))
+
+(claim plusCommutative
+  (Π ([n Nat]
+      [m Nat])
+    (= Nat (+ n m) (+ m n))))
+(define plusCommutative
+  (lambda (n m)
+    (ind-Nat n
+      (lambda (k)  (= Nat (+ k m) (+ m k)))
+      (n+zero=n m)
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (trans (cong p_n-1 (+ 1)) (add1+=+add1 m n-1))
+          )))))
+
+(claim plusCommutative2
+  (Π ([n Nat]
+      [m Nat])
+    (= Nat (+ n m) (+ m n))))
+
+(define plusCommutative2
+  (lambda (n m)
+    (ind-Nat n
+      (lambda (k)  (= Nat (+ k m) (+ m k)))
+      (n+zero=n m)
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (replace
+            (add1+=+add1 m n-1)
+            (lambda (x)
+              (= Nat (add1 (+ n-1 m)) x)
+              )
+            (cong p_n-1 (+ 1))
+            ))))))
+  

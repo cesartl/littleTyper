@@ -73,12 +73,14 @@
 (define a=b->a+n=b+n
   (lambda (a b n)
     (lambda (a=b)
-      (ind-Nat n
-        (lambda (k) (= Nat (+ a k) (+ b k)))
-        (a=b->a+0=b+0 a b a=b)
-        (lambda (n-1 p_n-1)
-          (trans (a+_b+1=1+_a+b a n-1) (trans (cong p_n-1 (+ 1)) (symm (a+_b+1=1+_a+b b n-1))))
-          )))))
+      (replace
+        a=b
+        (lambda (k) (= Nat (+ a n) (+ k n)))
+        (same (+ a n))
+        )
+      )
+    )
+  )
 
 ;; Exercise 8.3
 ;;
