@@ -1,0 +1,228 @@
+#lang pie
+
+(claim +
+  (-> Nat Nat
+    Nat))
+
+(define +
+  (λ (a b)
+    (rec-Nat a
+      b
+      (λ (_ b+a-k)
+        (add1 b+a-k)))))
+
+
+(claim n+zero=n
+  (Pi [(n Nat)]
+    (= Nat n (+ n zero))))
+(define n+zero=n
+  (lambda (n)
+    (ind-Nat n
+      (lambda (k) (= Nat k (+ k zero)))
+      (same zero)
+      (lambda (n-1) ;p_n-1 = proof that n - 1 = (+ (n - 1) zero), we need (= Nat (add1 n) (+ (add1 n) zero))
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1)))))))
+
+(claim add1+=+add1
+  (Pi [(n Nat) (j Nat)]
+    (= Nat (add1 (+ n j)) (+ n (add1 j)))))
+(define add1+=+add1
+  (lambda (n j)
+    (ind-Nat n
+      (lambda (k)  (= Nat (add1 (+ k j)) (+ k (add1 j))))
+      (same (add1 j))
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (cong p_n-1 (+ 1)))))))
+
+(claim plusCommutative
+  (Π ([n Nat]
+      [m Nat])
+    (= Nat (+ n m) (+ m n))))
+(define plusCommutative
+  (lambda (n m)
+    (ind-Nat n
+      (lambda (k)  (= Nat (+ k m) (+ m k)))
+      (n+zero=n m)
+      (lambda (n-1)
+        (lambda (p_n-1)
+          (trans (cong p_n-1 (+ 1)) (add1+=+add1 m n-1))
+          )))))
+(claim plusAssociative
+  (Π ([n Nat]
+      [m Nat]
+      [k Nat])
+    (= Nat (+ k (+ n m)) (+ (+ k n) m))))
+(define plusAssociative
+  (lambda (n m k)
+    (ind-Nat k
+      (lambda (i) (= Nat (+ i (+ n m)) (+ (+ i n) m)))
+      (same (+ n m))
+      (lambda (k-1)
+        (lambda (p_k-1)
+          (cong p_k-1 (+ 1))
+          )))))
+
+
+(claim <=
+  (-> Nat Nat
+    U))
+
+(define <=
+  (λ (a b)
+    (Σ ([k Nat])
+      (= Nat (+ k a) b))))
+
+;------------------------------------------------------------------------------------------------
+; Proving that n + a = n + b -> a =b
+;------------------------------------------------------------------------------------------------
+(claim remove-add1
+  (-> Nat Nat))
+(define remove-add1
+  (lambda (n)
+    (which-Nat
+      n
+      zero
+      (lambda (n-1) n-1)
+      )))
+
+(claim n+a=n+b->a=b
+  (Pi [(a Nat) (b Nat) (n Nat)]
+    (-> (= Nat (+ n a) (+ n b))
+      (= Nat a b))))
+(define n+a=n+b->a=b
+  (lambda (a b n)
+    (ind-Nat
+      n
+      (lambda (k) (-> (= Nat (+ k a) (+ k b)) (= Nat a b)))
+      (lambda (p) p)
+      (lambda (k h) ;
+        (lambda (n+a=n+b)
+          (h (cong n+a=n+b remove-add1))
+          )
+        ))))
+
+;------------------------------------------------------------------------------------------------
+; Proving that a + n = b + n -> a=b
+; we use n+a=n+b->a=b and plusCommutative
+; we also use helper functions flip+from and flip+to to flip plus arguments in (= Nat)
+;------------------------------------------------------------------------------------------------
+
+(claim flip+from
+  (Pi [(a Nat) (n Nat) (k Nat)]
+    (-> (= Nat (+ a n) k)
+      (= Nat (+ n a) k)
+      )))
+(define flip+from
+  (lambda (a n k)
+    (lambda (a+n=k)
+      (trans
+        (plusCommutative n a) ; (= Nat (+ n a) (+ a n))
+        a+n=k
+        )
+      )))
+
+(claim flip+to
+  (Pi [(a Nat) (n Nat) (k Nat)]
+    (-> (= Nat k (+ a n))
+      (= Nat k (+ n a))
+      )))
+(define flip+to
+  (lambda (a n k)
+    (lambda (a+n=k)
+      (trans
+        a+n=k
+        (plusCommutative a n) ;(= Nat (+ a n) (+ n a)
+        )
+      )))
+
+(claim a+n=b+n->a=b
+  (Pi [(a Nat) (b Nat) (n Nat)]
+    (-> (= Nat (+ a n) (+ b n))
+      (= Nat a b))))
+(define a+n=b+n->a=b
+  (lambda (a b n)
+    (lambda (a+n=b+n)
+      (n+a=n+b->a=b a b n
+        (flip+from a n (+ n b)
+          (flip+to b n (+ a n)
+            a+n=b+n
+            )
+          )
+        )
+      )
+    ))
+  
+;------------------------------------------------------------------------------------------------
+; We now prove that the car in (<= a b) is unique, i.e.  if we have two (<= a b) then their car must be equals
+; we use a+n=b+n->a=b to prove this statement as follow
+; we have x + a = b and y + a = b, we want to show that x = y
+; we can infer x + a = y + a -> x = y using a+n=b+n->a=b
+;------------------------------------------------------------------------------------------------
+
+(claim <=unique
+  (Pi [( a Nat) (b Nat) (a<=b1 (<= a b)) (a<=b2 (<= a b))]
+    (= Nat (car a<=b1) (car a<=b2))))
+(define <=unique
+  (lambda (a b)
+    (lambda (a<=b1 a<=b2)
+      (a+n=b+n->a=b (car a<=b1) (car a<=b2) a
+        (trans
+          (cdr a<=b1)
+          (symm (cdr a<=b2))
+          )
+        )
+      )))
+
+;------------------------------------------------------------------------------------------------
+; we now prove that (= Nat (+ x y) 0) -> (= Nat y 0)
+;------------------------------------------------------------------------------------------------
+(claim n+y=0->y=0
+  (Pi [(n Nat) (y Nat)]
+    (-> (= Nat (+ n y) 0)
+        (= Nat y 0))))
+(define n+y=0->y=0
+  (lambda (n y)
+    (ind-Nat n
+      (lambda (k) (-> (= Nat (+ k y) 0) (= Nat y 0)))
+      (lambda (p) p)
+      (lambda (k h)
+        (lambda (p)
+          TODO
+          )
+        ))))
+
+;------------------------------------------------------------------------------------------------
+; Finally we prove that (<= a b) (<= b a) -> (= Nat a b)
+; we have x + a = b and y + b = a
+; with x = (car a<=b) and y = (car b<=a)
+; Using replace we can get (x + (y + b) ) = b
+; Using associativity we can have (x + y) + b = b
+; Now we know that (<= b b) (i.e 0 + b = b) thus by uniqueness <=unique we can prove that (x + y) = 0
+
+;------------------------------------------------------------------------------------------------
+
+(claim a<=b&b<=a->a=b
+  (Pi [(a Nat) (b Nat)]
+    (-> (<= a b) (<= b a)
+      (= Nat a b))))
+(define a<=b&b<=a->a=b
+  (lambda (a b)
+    (lambda (a<=b b<=a)
+      (<=unique b b
+        (cons (+ (car a<=b) (car b<=a))
+          (trans
+            (symm (plusAssociative (car b<=a) b (car a<=b))) ; (= Nat (+ (+ x y) b) (+ x (+ y b)))
+            (replace (symm (cdr b<=a)) ; target: (= Nat a (+ y b))
+              (lambda (k) (= Nat (+ (car a<=b) k) b))
+              (cdr a<=b)
+              ) ; replace produces a (= Nat (+ x (+ y b)) b)
+            ); trans produces a (= Nat (+ (+ x y) b) b)
+          ); here we create a (<= b b) where k = (+ x y)
+        (cons 0 (same b))
+        ); <=unique produces (= Nat (+ x y) 0)
+      )
+    )
+  )
+        
