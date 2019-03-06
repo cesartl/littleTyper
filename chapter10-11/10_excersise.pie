@@ -167,12 +167,17 @@
 
 ; what makes this proof solvable without induction
 
+; what we have (cons x (= (+ x (+ n a)) b))
+; we need to transform (+ x (+ n a)) into (+ [+ x n] a)
+; k = (+ x n)
+; x = (car n+a<=b)
+; goal (<= a b) : (cons k (= (+ k a) b))
 (define <=-simplify
   (lambda (a b n)
     (lambda (n+a<=b)
       (cons (+ (car n+a<=b) n)
         (replace
-          (plusAssociative n a (car n+a<=b))
+          (plusAssociative n a (car n+a<=b)) ; (+ n (+ (car n+a<=b) a) == (+ (+ n (car n+a<=b) a))
           (lambda (k) (= Nat k b))
           (cdr n+a<=b)
           )

@@ -1,5 +1,9 @@
 #lang pie
 
+;------------------------------------------------------------------------------------------------
+; boiler plate definitions and knwon properties
+;------------------------------------------------------------------------------------------------
+
 (claim +
   (-> Nat Nat
     Nat))
@@ -75,7 +79,7 @@
       (= Nat (+ k a) b))))
 
 ;------------------------------------------------------------------------------------------------
-; Proving that n + a = n + b -> a =b
+; Proving that n+a=n+b -> a=b
 ;------------------------------------------------------------------------------------------------
 (claim remove-add1
   (-> Nat Nat))
@@ -104,9 +108,9 @@
         ))))
 
 ;------------------------------------------------------------------------------------------------
-; Proving that a + n = b + n -> a=b
+; Proving that a+n=b+n->a=b
 ; we use n+a=n+b->a=b and plusCommutative
-; we also use helper functions flip+from and flip+to to flip plus arguments in (= Nat)
+; we also use helper functions flip+from and flip+to to flip plus arguments in (= Nat from to)
 ;------------------------------------------------------------------------------------------------
 
 (claim flip+from
@@ -176,12 +180,12 @@
       )))
 
 ;------------------------------------------------------------------------------------------------
-; we now prove that (= Nat (+ x y) 0) -> (= Nat y 0)
+; we now prove that (= Nat (+ n y) 0) -> (= Nat y 0)
 ;------------------------------------------------------------------------------------------------
 (claim n+y=0->y=0
   (Pi [(n Nat) (y Nat)]
     (-> (= Nat (+ n y) 0)
-        (= Nat y 0))))
+      (= Nat y 0))))
 (define n+y=0->y=0
   (lambda (n y)
     (ind-Nat n
@@ -189,7 +193,7 @@
       (lambda (p) p)
       (lambda (k h)
         (lambda (p)
-          TODO
+          (h (cong p remove-add1))
           )
         ))))
 
@@ -199,8 +203,8 @@
 ; with x = (car a<=b) and y = (car b<=a)
 ; Using replace we can get (x + (y + b) ) = b
 ; Using associativity we can have (x + y) + b = b
-; Now we know that (<= b b) (i.e 0 + b = b) thus by uniqueness <=unique we can prove that (x + y) = 0
-
+; Now we know that (<= b b) (i.e 0 + b = b) thus with <=unique we can prove that (x + y) = 0
+; (x + y) = 0 means both x and y are 0 but we only need to prove that one (y) is null to get our target equality 
 ;------------------------------------------------------------------------------------------------
 
 (claim a<=b&b<=a->a=b
@@ -210,18 +214,26 @@
 (define a<=b&b<=a->a=b
   (lambda (a b)
     (lambda (a<=b b<=a)
-      (<=unique b b
-        (cons (+ (car a<=b) (car b<=a))
-          (trans
-            (symm (plusAssociative (car b<=a) b (car a<=b))) ; (= Nat (+ (+ x y) b) (+ x (+ y b)))
-            (replace (symm (cdr b<=a)) ; target: (= Nat a (+ y b))
-              (lambda (k) (= Nat (+ (car a<=b) k) b))
-              (cdr a<=b)
-              ) ; replace produces a (= Nat (+ x (+ y b)) b)
-            ); trans produces a (= Nat (+ (+ x y) b) b)
-          ); here we create a (<= b b) where k = (+ x y)
-        (cons 0 (same b))
-        ); <=unique produces (= Nat (+ x y) 0)
+      (symm
+        (replace 
+          (n+y=0->y=0 (car a<=b) (car b<=a)
+            (<=unique b b
+              (cons (+ (car a<=b) (car b<=a))
+                (trans
+                  (symm (plusAssociative (car b<=a) b (car a<=b))) ; (= Nat (+ (+ x y) b) (+ x (+ y b)))
+                  (replace (symm (cdr b<=a))                       ; target: (= Nat a (+ y b))
+                    (lambda (k) (= Nat (+ (car a<=b) k) b))
+                    (cdr a<=b)
+                    )                                              ; replace produces a (= Nat (+ x (+ y b)) b)
+                  )                                                ; trans produces a (= Nat (+ (+ x y) b) b)
+                )                                                  ; here we create a (<= b b) where k = (+ x y)
+              (cons 0 (same b))
+              )                                                    ; <=unique produces (= Nat (+ x y) 0)
+            )                                                      ; (= Nat y 0)
+          (lambda (k) (= Nat (+ k b) a))
+          (cdr b<=a)
+          )                                                        ; (= Nat b a)
+        )
       )
     )
   )
