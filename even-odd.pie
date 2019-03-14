@@ -1,0 +1,181 @@
+#lang pie
+
+(claim +
+  (-> Nat Nat
+    Nat))
+
+(define +
+  (λ (a b)
+    (rec-Nat a
+      b
+      (λ (_ a+b-1)
+        (add1 a+b-1)))))
+
+(claim double
+  (-> Nat
+    Nat))
+
+(define double
+  (λ (n)
+    (rec-Nat n
+      0
+      (λ (_ n+n-2)
+        (+ 2 n+n-2)))))
+
+(claim Even
+  (-> Nat
+    U))
+
+(define Even
+  (λ (n)
+    (Σ ([half Nat])
+      (= Nat n (double half)))))
+
+(claim Odd
+  (-> Nat
+    U))
+
+(define Odd
+  (λ (n)
+    (Σ ([haf Nat])
+      (= Nat n (add1 (double haf))))))
+
+(claim <=
+  (-> Nat Nat
+    U))
+
+(define <=
+  (λ (a b)
+    (Σ ([k Nat])
+      (= Nat (+ k a) b))))
+
+
+;; Exercise 12.1
+;;
+;; Define a function called sumOfTwoEvensIsEven that states and proves that the sum
+;; of two Even Nats is Even.
+
+(claim +double=double+
+  (Pi [(n Nat) (m Nat)]
+    (= Nat (+ (double n) (double m)) (double (+ n m)))
+    ))
+(define +double=double+
+  (lambda (n m)
+    (ind-Nat n
+      (lambda (k) (= Nat (+ (double k) (double m)) (double (+ k m))))
+      (same (double m))
+      (lambda (k p)
+        (cong p (+ 2))
+        )
+      )))
+
+(claim double-replace
+  (Pi [(T1 U) (T2 U) (T3 U) (a T1) (b T1) (c T2) (d T2) (f (-> T1 T2 T3))]
+    (-> (= T1 a b) (= T2 c d)
+      (= T3 (f a c) (f b d)
+        ))))
+(define double-replace
+  (lambda (T1 T2 T3 a b c d f)
+    (lambda (a=b c=d)
+      (replace
+        c=d
+        (lambda (k) (= T3 (f a c) (f b k)))
+        (cong
+          a=b
+          (the (-> T1 T3) (lambda (e) (f e c)))
+          )
+        )
+      )))
+    
+(claim sumOfTwoEvensIsEven
+  (Π ([n Nat]
+      [m Nat])
+    (-> (Even n) (Even m)
+      (Even (+ n m)))))
+
+(define sumOfTwoEvensIsEven
+  (lambda (n m)
+    (lambda (nEven mEven)
+      (cons
+        (+ (car nEven) (car mEven))  
+        (replace
+          (+double=double+ (car nEven) (car mEven))
+          (lambda (k) (= Nat (+ n m) k))
+          (double-replace Nat Nat Nat n (double (car nEven)) m (double (car mEven)) (lambda (x y) (+ x y)) (cdr nEven) (cdr mEven)))))
+    ))
+
+;; Exercise 12.2
+;;
+;; Define a function called sumOfTwoOddsIsEven that states and proves that the sum of
+;; two Odd Nats is Even.
+
+
+(claim +add1=add1+
+  (Pi [(a Nat) (b Nat)]
+    (= Nat (+ a (add1 b)) (add1 (+ a b)))))
+(define +add1=add1+
+  (lambda (a b)
+    (ind-Nat
+      a
+      (lambda (k) (= Nat (+ k (add1 b)) (add1 (+ k b))))
+      (same (add1 b))
+      (lambda (n p)
+        (cong p (+ 1))
+        )
+      )))
+
+(claim sumOfTwoOddsIsEven
+  (Π ([n Nat]
+      [m Nat])
+    (-> (Odd n) (Odd m)
+      (Even (+ n m)))))
+(define sumOfTwoOddsIsEven
+  (lambda (n m)
+    (lambda (nOdd mOdd)
+      (cons 
+        (+ (add1 (car nOdd)) (car mOdd))
+        (replace
+          (+double=double+ (add1 (car nOdd)) (car mOdd))
+          (lambda (k) (= Nat (+ n m) k))
+          (trans
+            (double-replace Nat Nat Nat n (add1 (double (car nOdd))) m (add1 (double (car mOdd))) (lambda (x y) (+ x y)) (cdr nOdd) (cdr mOdd))
+            (+add1=add1+
+              (add1 (double (car nOdd)))
+              (double (car mOdd))
+              )
+            )
+          )))))
+;(sumOfTwoOddsIsEven 3 7 (cons 1 (same 3)) (cons 3 (same 7)))
+
+;; Exercise 12.3
+;;
+;; Define a function called nOrSuccnIsEven that states and proves that for all Nats n, either
+;; n is Even or n+1 is Even.
+
+(claim nOrSuccnIsEven
+  (Π ([n Nat])
+    (Either (Even n) (Even (add1 n)))))
+(define nOrSuccnIsEven
+  (lambda (n)
+    (ind-Nat n
+      (lambda (k) (Either (Even k) (Even (add1 k))))
+      (left (cons 0 (same 0)))
+      (lambda (k e)
+        (ind-Either
+          e
+          (lambda (x) (Either (Even (add1 k)) (Even (add1(add1 k)))))
+          (lambda (kEven)
+            (right (cons (add1 (car kEven)) (cong (cdr kEven) (+ 2)))))
+          (lambda (k+1Even)
+            (left k+1Even))
+          )))))
+
+;; Exercise 12.4
+;;
+;; Define a function called either-a<=b-or-b<=a that states and proves that for all Nats a b,
+;; either a<=b or b<=a
+
+(claim either-a<=b-or-b<=a
+       (Π ([a Nat]
+           [b Nat])
+          (Either (<= a b) (<= b a))))
