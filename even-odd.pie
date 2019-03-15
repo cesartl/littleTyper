@@ -175,7 +175,102 @@
 ;; Define a function called either-a<=b-or-b<=a that states and proves that for all Nats a b,
 ;; either a<=b or b<=a
 
+(claim 0<=n
+  (Pi [(n Nat)]
+    (<= 0 n)))
+(define 0<=n
+  (lambda (n)
+    (ind-Nat
+      n
+      (lambda (k) (<= 0 k))
+      (cons 0 (same 0))
+      (lambda (k p)
+        (cons (add1 (car p)) (cong (cdr p) (+ 1)))
+        )
+      )
+    ))
+
+(claim 0or>=1
+  (Pi [(n Nat)]
+    (Either (= Nat 0 n) (Sigma [(n-1 Nat)] (= Nat (add1 n-1) n)))))
+(define 0or>=1
+  (lambda (n)
+    (ind-Nat
+      n
+      (lambda (k) (Either (= Nat 0 k) (Sigma [(n-1 Nat)] (= Nat (add1 n-1) k))))
+      (left (same 0))
+      (lambda (k k=0or1<=k)
+        (ind-Either
+          k=0or1<=k
+          (lambda (x) (Either (= Nat 0 (add1 k)) (Sigma [(n-1 Nat)] (= Nat (add1 n-1) (add1 k)))))
+          (lambda (k=0) (right (cons 0 (cong k=0 (+ 1)))))
+          (lambda (1<=k)
+            (right (cons (add1 (car 1<=k)) (cong (cdr 1<=k) (+ 1))))
+            )
+          )))))
+
+(claim n<=a->n+1<=aORa<=n+1
+  (Pi [(a Nat) (n Nat)]
+    (-> (<= n a)
+      (Either (<= (add1 n) a) (<= a (add1 n)))
+      )))
+(define  n<=a->n+1<=aORa<=n+1
+  (lambda (a n n<=a)
+    (ind-Either
+      (0or>=1 (car n<=a))
+      (lambda (x) (Either (<= (add1 n) a) (<= a (add1 n))))
+      (lambda (car=0)
+        (right
+          (cons 1
+            (symm
+              (cong 
+                (replace
+                  (symm car=0)
+                  (lambda (k) (= Nat (+ k n) a))
+                  (cdr n<=a)
+                  )
+                (+ 1)
+                )
+              )
+            )
+          )
+        )
+      (lambda (car>=1)
+        (left
+          (cons (car car>=1)
+            (trans
+              (+add1=add1+ (car car>=1) n)
+              (replace
+                (symm (cdr car>=1))
+                (lambda (k) (= Nat (+ k n) a))
+                (cdr n<=a)
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
 (claim either-a<=b-or-b<=a
-       (Π ([a Nat]
-           [b Nat])
-          (Either (<= a b) (<= b a))))
+  (Π ([a Nat]
+      [b Nat])
+    (Either (<= a b) (<= b a))))
+(define  either-a<=b-or-b<=a
+  (lambda (a b)
+    (ind-Nat
+      a
+      (lambda (k) (Either (<= k b) (<= b k)))
+      (left (0<=n b))
+      (lambda (k either)
+        (ind-Either
+          either
+          (lambda (x) (Either (<= (add1 k) b) (<= b (add1 k))))
+          (lambda (k<=b)
+            (n<=a->n+1<=aORa<=n+1 b k k<=b)
+            )
+          (lambda (b<=k)
+            (right (cons (add1 (car b<=k)) (cong (cdr b<=k) (+ 1))))
+            )
+          )))))

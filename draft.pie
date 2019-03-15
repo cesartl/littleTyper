@@ -1,0 +1,46 @@
+#lang pie
+
+(claim +
+  (-> Nat Nat
+    Nat))
+
+(define +
+  (λ (a b)
+    (rec-Nat a
+      b
+      (λ (_ a+b-1)
+        (add1 a+b-1)))))
+
+(claim <=
+  (-> Nat Nat
+    U))
+
+(define <=
+  (λ (a b)
+    (Σ ([k Nat])
+      (= Nat (+ k a) b))))
+
+
+(claim n+a=b->a=bORa+1<=b
+  (Pi [(a Nat) (b Nat) (n Nat)]
+    (-> (= Nat (+ n a) b)
+      (Either (= Nat a b) (<= (add1 a) b)))))
+
+(claim 0or>=1
+  (Pi [(n Nat)]
+    (Either (= Nat 0 n) (Sigma [(n-1 Nat)] (= Nat (add1 n-1) n)))))
+(define 0or>=1
+  (lambda (n)
+    (ind-Nat
+      n
+      (lambda (k) (Either (= Nat 0 k) (Sigma [(n-1 Nat)] (= Nat (add1 n-1) k))))
+      (left (same 0))
+      (lambda (k k=0or1<=k)
+        (ind-Either
+          k=0or1<=k
+          (lambda (x) (Either (= Nat 0 (add1 k)) (Sigma [(n-1 Nat)] (= Nat (add1 n-1) (add1 k)))))
+          (lambda (k=0) (right (cons 0 (cong k=0 (+ 1)))))
+          (lambda (1<=k)
+            (right (cons (add1 (car 1<=k)) (cong (cdr 1<=k) (+ 1))))
+        )
+      )))))
