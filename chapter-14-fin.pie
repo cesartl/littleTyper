@@ -1,0 +1,120 @@
+#lang pie
+
+;; Exercises on Fin from Chapter 14 of The Little Typer
+(claim Maybe
+  (-> U
+    U))
+(define Maybe
+  (λ (X)
+    (Either X Trivial)))
+(claim nothing
+  (Π ([E U])
+    (Maybe E)))
+(define nothing
+  (λ (_)
+    (right sole)))
+(claim just
+  (Π ([E U])
+    (-> E
+      (Maybe E))))
+(define just
+  (λ (_ e)
+    (left e)))
+(claim Fin
+  (-> Nat
+    U))
+(define Fin
+  (λ (n)
+    (iter-Nat n
+      Absurd
+      Maybe)))
+(claim fzero
+  (Π ([n Nat])
+    (Fin (add1 n))))
+(define fzero
+  (λ (n)
+    (nothing (Fin n))))
+(claim fadd1
+  (Π ([n Nat])
+    (-> (Fin n)
+      (Fin (add1 n)))))
+(define fadd1
+  (λ (n)
+    (λ (i-1)
+      (just (Fin n) i-1))))
+;; Exercise 14.1
+;;
+;; Define a function called insert-at that inserts a Nat into
+;; a Vector.
+;;
+;; The signature of the function should only allow calls that
+;; insert the Nat at an existing position in the Vector.
+
+
+
+
+(claim insert-at
+  (Π ([l Nat])
+    (-> (Fin (add1 l)) (Vec Nat l) Nat
+      (Vec Nat (add1 l)))))
+(define insert-at
+  (lambda (l)
+    (ind-Nat
+      l
+      (lambda (k) (-> (Fin (add1 k)) (Vec Nat k) Nat (Vec Nat (add1 k))))
+      (lambda (_ emptyVec n) (vec:: n vecnil))
+      (lambda (k fn-1 indexK+1 vecK+1 n)
+        (ind-Either
+          indexK+1
+          (lambda (_) (Vec Nat (add1 (add1 k))))
+          (lambda (index-1) (vec:: (head vecK+1) (fn-1 index-1 (tail vecK+1) n)))
+          (lambda (trivial) (vec:: n vecK+1))
+          )
+        )
+      )
+    ))
+
+(insert-at 2 (fzero 2) (vec:: 1 (vec:: 2 vecnil)) 9)
+(insert-at 2 (fadd1 2 (fzero 1)) (vec:: 1 (vec:: 2 vecnil)) 9)
+(insert-at 2 (fadd1 2 (fadd1 1 (fzero 0))) (vec:: 1 (vec:: 2 vecnil)) 9)
+
+
+(claim Matrix
+  (-> Nat Nat
+    U))
+(define Matrix
+  (λ (rows columns)
+    (Vec (Vec Nat columns) rows)))
+
+;; Exercise 14.2
+;;
+;; Define a function called matrix-ref that can be used to find the
+;; entries of a Matrix. Use Fin types for the arguments of this function
+;; that bounds check the call to the dimenstions of the matrix.
+
+(claim vec-ref
+  (Pi ([E U] [l Nat])
+    (-> (Fin l) (Vec E l) E)))
+(define vec-ref
+  (lambda (E l)
+    (ind-Nat l
+      (lambda (k) (-> (Fin k) (Vec E k) E))
+      (lambda (noValue es) (ind-Absurd noValue E))
+      (lambda (l-1 vecRef_l-1 i es)
+        (ind-Either i
+          (lambda (_) E)
+          (lambda (i-1) (vecRef_l-1 i-1 (tail es)))
+          (lambda (_) (head es))
+          )))))
+
+(claim matrix-ref
+  (Π ([rows Nat] [columns Nat])
+    (-> (Fin rows) (Fin columns) (Matrix rows columns) Nat)))
+(define matrix-ref
+  (lambda (rows columns)
+    (lambda (finRows finCols matrix)
+      (vec-ref Nat columns finCols
+        (vec-ref (Vec Nat columns) rows finRows matrix)
+        )
+      )))
+      

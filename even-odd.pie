@@ -230,11 +230,7 @@
                   (cdr n<=a)
                   )
                 (+ 1)
-                )
-              )
-            )
-          )
-        )
+                )))))
       (lambda (car>=1)
         (left
           (cons (car car>=1)
@@ -266,8 +262,8 @@
       (lambda (k either)
         (ind-Either
           either
-          (lambda (x) (Either (<= (add1 k) b) (<= b (add1 k))))
-          (lambda (k<=b)
+          (lambda (_) (Either (<= (add1 k) b) (<= b (add1 k))))
+          (lambda (k<=b) ; there exist x / (+ x k) = b
             (n<=a->n+1<=aORa<=n+1 b k k<=b)
             )
           (lambda (b<=k)
